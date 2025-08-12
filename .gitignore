@@ -1,0 +1,4 @@
+palettesmith
+dist/
+*.log
+.air.toml
