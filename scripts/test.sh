@@ -1,3 +1,0 @@
-#!/bin/bash
-# Run all tests with coverage
-go test -v -cover ./...
