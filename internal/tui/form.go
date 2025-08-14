@@ -134,6 +134,10 @@ func validateValue(spec plugin.Field, v string) string {
 
 func (f formModel) View() string {
 	var b strings.Builder
+
+	rowNormal := lipgloss.NewStyle().Foreground(lipgloss.Color("#b0b0b0"))
+	rowFocus := lipgloss.NewStyle().Foreground(lipgloss.Color("#e6e6e6")).Bold(true)
+
 	for i, fld := range f.fields {
 		cursor := "  "
 		if i == f.focusIndex {
@@ -141,6 +145,7 @@ func (f formModel) View() string {
 		}
 
 		label := lipgloss.NewStyle().Bold(true).Render(fld.spec.Label)
+
 		swatch := ""
 		if fld.spec.Type == "color" && colorRe.MatchString(fld.input.Value()) {
 			swatch = " " + lipgloss.NewStyle().
@@ -148,17 +153,26 @@ func (f formModel) View() string {
 				Padding(0, 1).
 				Render(" ")
 		}
+
 		help := ""
 		if fld.spec.Help != "" {
 			help = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("#777777")).Render(fld.spec.Help)
 		}
+
 		err := ""
 		if fld.err != "" {
 			err = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("#ff6b6b")).Render(fld.err)
 		}
 
-		fmt.Fprintf(&b, "%s%s %s%s%s%s\n", cursor, label, fld.input.View(), swatch, err, help)
+		row := fmt.Sprintf("%s%s  %s%s%s%s", cursor, label, fld.input.View(), swatch, err, help)
+
+		if i == f.focusIndex {
+			fmt.Fprintln(&b, rowFocus.Render(row))
+		} else {
+			fmt.Fprintln(&b, rowNormal.Render(row))
+		}
 	}
+
 	b.WriteString("\nEnter to edit • ↑/↓ move • A Apply • Q quit")
 	return b.String()
 }

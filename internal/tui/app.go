@@ -113,11 +113,15 @@ var (
 			BorderRight(true).
 			BorderForeground(lipgloss.Color("#666666"))
 	rightStyle = lipgloss.NewStyle().
-			Padding(1, 2)
+			Padding(0, 2)
 	helpStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#7d7d7d"))
 	titleStyle = lipgloss.NewStyle().
 			Bold(true)
+	tabActive = lipgloss.NewStyle().
+			Bold(true)
+	tabDim = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#7d7d7d"))
 )
 
 func (m Model) View() string {
@@ -128,13 +132,13 @@ func (m Model) View() string {
 	if title == "" {
 		title = "Select a target"
 	}
-	cur := m.page
-	var tabStr string
-	if cur == pageForm {
-		tabStr = lipgloss.NewStyle().Bold(true).Render("Form") + " · Explainer"
-	} else {
-		tabStr = lipgloss.NewStyle().Bold(true).Render("Explainer") + " · Form"
-	}
+
+	tabs := lipgloss.JoinHorizontal(lipgloss.Top,
+		boolStyle(m.page == pageExplainer, tabActive, tabDim).Render("Explainer"),
+		lipgloss.NewStyle().Padding(0, 1).Render("·"),
+		boolStyle(m.page == pageForm, tabActive, tabDim).Render("Form"),
+	)
+
 	selID := m.sidebar.SelectedID()
 	var upaths, spaths, reload string
 	if selID != "" && m.store != nil {
@@ -153,7 +157,7 @@ func (m Model) View() string {
 		body = titleStyle.Render(title) + "\n\n" + m.form.View()
 	}
 
-	body = tabStr + "\n\n" + body
+	body = tabs + "\n\n" + body
 
 	right := rightStyle.Width(rightWidth).Render(body)
 
@@ -194,3 +198,10 @@ func clearAfter(d time.Duration) tea.Cmd {
 }
 
 type statusClearMsg struct{}
+
+func boolStyle(ok bool, a, b lipgloss.Style) lipgloss.Style {
+	if ok {
+		return a
+	}
+	return b
+}
