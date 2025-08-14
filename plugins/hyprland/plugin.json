@@ -1,0 +1,15 @@
+{
+  "id": "hyprland",
+  "title": "Hyprland",
+  "spec": "spec.json",
+  "user_paths": [
+    "~/.config/hypr/hyprland.conf"
+  ],
+  "system_paths": [
+    "/etc/xdg/hypr/hyprland.conf"
+  ],
+  "reload": [
+    "hyprctl",
+    "reload"
+  ]
+}

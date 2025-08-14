@@ -3,10 +3,10 @@ package tui
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type targetItem struct {
+	id          string
 	title       string
 	description string
 }
@@ -19,14 +19,7 @@ type Sidebar struct {
 	l list.Model
 }
 
-func NewSidebar() Sidebar {
-	items := []list.Item{
-		targetItem{"Hyprland", "Window manager config"},
-		targetItem{"Waybar", "Bar theming (CSS variables)"},
-		targetItem{"Alacritty", "Terminal colors"},
-		targetItem{"btop", "System monitor theme"},
-	}
-
+func NewSidebar(items []list.Item) Sidebar {
 	delegate := list.NewDefaultDelegate()
 	l := list.New(items, delegate, 28, 16)
 	l.Title = "Targets"
@@ -48,7 +41,14 @@ func (s Sidebar) Update(msg tea.Msg) (Sidebar, tea.Cmd) {
 }
 
 func (s Sidebar) View() string {
-	return lipgloss.NewStyle().Padding(0, 1).Width(30).Render(s.l.View())
+	return s.l.View()
+}
+
+func (s Sidebar) SelectedID() string {
+	if it, ok := s.l.SelectedItem().(targetItem); ok {
+		return it.id
+	}
+	return ""
 }
 
 func (s Sidebar) SelectedTitle() string {
