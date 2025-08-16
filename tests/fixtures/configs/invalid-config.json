@@ -1,0 +1,8 @@
+{
+  "target_theme_dir": "/home/user/.config/palettesmith/themes",
+  "current_theme_link": "/home/user/.config/palettesmith/current/theme",
+  "preset": "generic",
+  "staging_dir": "/home/user/.config/palettesmith/staging",
+  "invalid_field": "this will cause parsing errors",
+  "malformed": json
+}

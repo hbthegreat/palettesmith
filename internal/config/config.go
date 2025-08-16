@@ -23,7 +23,8 @@ type Config struct {
 }
 
 type Manager struct {
-	cfg Config
+	cfg       Config
+	isFirstRun bool
 }
 
 func NewManager() (*Manager, error) {
@@ -39,9 +40,11 @@ func NewManager() (*Manager, error) {
 	configFile := filepath.Join(configDir, "config.json")
 
 	var cfg Config
+	var isFirstRun bool
 
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		// File doesn't exist, create default config
+		// File doesn't exist, this is a first run
+		isFirstRun = true
 		cfg = Config{
 			TargetThemeDir:   filepath.Join(configDir, "themes"),
 			CurrentThemeLink: filepath.Join(configDir, "current/theme"),
@@ -49,24 +52,33 @@ func NewManager() (*Manager, error) {
 			StagingDir:       filepath.Join(configDir, "staging"),
 		}
 
-		// Save default config to file
-		if err := saveConfigToFile(cfg, configFile); err != nil {
-			return nil, fmt.Errorf("failed to save default config: %w", err)
-		}
+		// Don't save the config yet - let the setup flow do that
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to check config file: %w", err)
 	} else {
+		// File exists, load it
+		isFirstRun = false
 		cfg, err = loadConfigFromFile(configFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load config: %w", err)
 		}
 	}
 
-	return &Manager{cfg: cfg}, nil
+	return &Manager{cfg: cfg, isFirstRun: isFirstRun}, nil
 }
 
 func (m *Manager) GetConfig() Config {
 	return m.cfg
+}
+
+// IsFirstRun returns whether this is the first time the application is running
+func (m *Manager) IsFirstRun() bool {
+	return m.isFirstRun
+}
+
+// MarkSetupComplete marks the first run as completed  
+func (m *Manager) MarkSetupComplete() {
+	m.isFirstRun = false
 }
 
 // SaveConfig persists the current configuration to disk
@@ -75,12 +87,12 @@ func (m *Manager) SaveConfig() error {
 	if err != nil {
 		return fmt.Errorf("failed to save config: cannot determine home directory: %w", err)
 	}
-	
+
 	configFile := filepath.Join(configDir, "config.json")
 	if err := saveConfigToFile(m.cfg, configFile); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -89,7 +101,7 @@ func (m *Manager) SetPreset(preset string) error {
 	if err != nil {
 		return fmt.Errorf("failed to set preset '%s': cannot determine home directory: %w", preset, err)
 	}
-	
+
 	switch preset {
 	case "generic":
 		m.cfg = Config{
