@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"palettesmith/internal/tui"
+	"palettesmith/ui/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -23,11 +23,13 @@ fixtures/
 
 ## Usage
 
-These fixtures are used by integration tests to verify:
+These fixtures are used by integration tests in `tests/integration/` to verify:
 - Plugin loading and validation
 - Config file parsing and modification
 - Theme import/export workflows
 - Staging and rollback operations
+
+Unit tests (colocated with source code) create minimal test data inline and should not use these fixtures unless necessary.
 
 ## Adding New Fixtures
 
