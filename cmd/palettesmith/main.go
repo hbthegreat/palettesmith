@@ -10,28 +10,48 @@ import (
 )
 
 func main() {
-	// Initialize config manager
+	configManager := initializeConfig()
+	runApplication(configManager)
+}
+
+// initializeConfig creates and returns a new config manager, exiting on failure
+func initializeConfig() *config.Manager {
 	configManager, err := config.NewManager()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize configuration: %v\n", err)
 		os.Exit(1)
 	}
+	return configManager
+}
 
-	// Check if this is the first run
-	isFirstRun := configManager.IsFirstRun()
+// createInitialModel determines which model to start with based on config state
+func createInitialModel(configManager *config.Manager) tea.Model {
+	if configManager.IsFirstRun() {
+		return tui.NewSetupModel()
+	}
+	return tui.New()
+}
 
-	var initialModel tea.Model
-	if isFirstRun {
-		// Show setup screen for first run
-		initialModel = tui.NewSetupModel()
-	} else {
-		// Use existing config and go to main TUI
-		initialModel = tui.New()
+// handleSetupCompletion processes setup completion and configures the chosen preset
+func handleSetupCompletion(setupModel tui.SetupModel, configManager *config.Manager) {
+	preset := setupModel.GetSelectedPreset()
+	if err := configManager.SetPreset(preset); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to set preset '%s': %v\n", preset, err)
+		os.Exit(1)
 	}
 
+	configManager.MarkSetupComplete()
+	if err := configManager.SaveConfig(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to save configuration: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// runApplication executes the main application loop, handling setup transitions
+func runApplication(configManager *config.Manager) {
+	initialModel := createInitialModel(configManager)
 	p := tea.NewProgram(initialModel, tea.WithAltScreen())
 
-	// Handle setup completion
 	for {
 		finalModel, err := p.Run()
 		if err != nil {
@@ -41,21 +61,8 @@ func main() {
 
 		// Check if we completed setup and need to transition to main app
 		if setupModel, ok := finalModel.(tui.SetupModel); ok && setupModel.IsConfirmed() {
-			// Get the chosen preset and configure it
-			preset := setupModel.GetSelectedPreset()
-			if err := configManager.SetPreset(preset); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to set preset '%s': %v\n", preset, err)
-				os.Exit(1)
-			}
-
-			// Mark setup as complete and save the configuration
-			configManager.MarkSetupComplete()
-			if err := configManager.SaveConfig(); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to save configuration: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Now start the main application
+			handleSetupCompletion(setupModel, configManager)
+			// Start the main application
 			p = tea.NewProgram(tui.New(), tea.WithAltScreen())
 			continue
 		}

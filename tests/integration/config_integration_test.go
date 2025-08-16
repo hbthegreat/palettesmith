@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,33 +50,23 @@ func TestConfigFilePersistence(t *testing.T) {
 
 	// Create first manager and set preset
 	manager1, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := manager1.SetPreset("omarchy"); err != nil {
-		t.Fatalf("SetPreset failed: %v", err)
-	}
+	err = manager1.SetPreset("omarchy")
+	require.NoError(t, err)
 
-	if err := manager1.SaveConfig(); err != nil {
-		t.Fatalf("SaveConfig failed: %v", err)
-	}
+	err = manager1.SaveConfig()
+	require.NoError(t, err)
 
 	// Create second manager - should load the saved config
 	manager2, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("Second NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	cfg := manager2.GetConfig()
-	if cfg.Preset != "omarchy" {
-		t.Errorf("Expected loaded preset 'omarchy', got '%s'", cfg.Preset)
-	}
+	assert.Equal(t, "omarchy", cfg.Preset)
 
 	// Verify the paths are correct for omarchy preset
-	if !strings.Contains(cfg.TargetThemeDir, "omarchy") {
-		t.Errorf("Expected omarchy theme dir, got: %s", cfg.TargetThemeDir)
-	}
+	assert.Contains(t, cfg.TargetThemeDir, "omarchy")
 }
 
 // TestConfigFileCorruption tests handling of corrupted config files
@@ -89,25 +78,19 @@ func TestConfigFileCorruption(t *testing.T) {
 
 	// Create config directory
 	configDir := filepath.Join(tempHome, ".config/palettesmith")
-	if err := os.MkdirAll(configDir, 0o755); err != nil {
-		t.Fatalf("Failed to create config dir: %v", err)
-	}
+	err := os.MkdirAll(configDir, 0o755)
+	require.NoError(t, err)
 
 	// Write corrupted JSON file
 	configFile := filepath.Join(configDir, "config.json")
 	corruptedJSON := `{"preset": "omarchy", "invalid": json}`
-	if err := os.WriteFile(configFile, []byte(corruptedJSON), 0o644); err != nil {
-		t.Fatalf("Failed to write corrupted config: %v", err)
-	}
+	err = os.WriteFile(configFile, []byte(corruptedJSON), 0o644)
+	require.NoError(t, err)
 
 	// NewManager should fail with corrupted config
-	_, err := config.NewManager()
-	if err == nil {
-		t.Error("Expected error with corrupted config file")
-	}
-	if !strings.Contains(err.Error(), "failed to load config") {
-		t.Errorf("Expected config loading error, got: %v", err)
-	}
+	_, err = config.NewManager()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to load config")
 }
 
 // TestPresetSwitching tests switching between different presets
@@ -118,35 +101,23 @@ func TestPresetSwitching(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	manager, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Test switching from generic to omarchy
-	if err := manager.SetPreset("omarchy"); err != nil {
-		t.Fatalf("SetPreset(omarchy) failed: %v", err)
-	}
+	err = manager.SetPreset("omarchy")
+	require.NoError(t, err)
 
 	cfg := manager.GetConfig()
-	if cfg.Preset != "omarchy" {
-		t.Errorf("Expected preset 'omarchy', got '%s'", cfg.Preset)
-	}
-	if !strings.Contains(cfg.TargetThemeDir, "omarchy") {
-		t.Errorf("Expected omarchy paths, got: %s", cfg.TargetThemeDir)
-	}
+	assert.Equal(t, "omarchy", cfg.Preset)
+	assert.Contains(t, cfg.TargetThemeDir, "omarchy")
 
 	// Test switching back to generic
-	if err := manager.SetPreset("generic"); err != nil {
-		t.Fatalf("SetPreset(generic) failed: %v", err)
-	}
+	err = manager.SetPreset("generic")
+	require.NoError(t, err)
 
 	cfg = manager.GetConfig()
-	if cfg.Preset != "generic" {
-		t.Errorf("Expected preset 'generic', got '%s'", cfg.Preset)
-	}
-	if !strings.Contains(cfg.TargetThemeDir, "palettesmith") {
-		t.Errorf("Expected palettesmith paths, got: %s", cfg.TargetThemeDir)
-	}
+	assert.Equal(t, "generic", cfg.Preset)
+	assert.Contains(t, cfg.TargetThemeDir, "palettesmith")
 }
 
 // TestConfigJSONFormat tests that saved config has correct JSON format
@@ -157,39 +128,29 @@ func TestConfigJSONFormat(t *testing.T) {
 	defer os.Setenv("HOME", originalHome)
 
 	manager, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := manager.SaveConfig(); err != nil {
-		t.Fatalf("SaveConfig failed: %v", err)
-	}
+	err = manager.SaveConfig()
+	require.NoError(t, err)
 
 	// Read the saved config file
 	configFile := filepath.Join(tempHome, ".config/palettesmith/config.json")
 	data, err := os.ReadFile(configFile)
-	if err != nil {
-		t.Fatalf("Failed to read config file: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Verify it's valid JSON
 	var cfg map[string]interface{}
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		t.Fatalf("Config file is not valid JSON: %v", err)
-	}
+	err = json.Unmarshal(data, &cfg)
+	require.NoError(t, err)
 
 	// Verify required fields exist
 	requiredFields := []string{"target_theme_dir", "current_theme_link", "preset", "staging_dir"}
 	for _, field := range requiredFields {
-		if _, exists := cfg[field]; !exists {
-			t.Errorf("Config missing required field: %s", field)
-		}
+		assert.Contains(t, cfg, field, "Config missing required field: %s", field)
 	}
 
 	// Verify JSON is formatted (indented)
-	if !strings.Contains(string(data), "\n") {
-		t.Error("Config JSON should be indented/formatted")
-	}
+	assert.Contains(t, string(data), "\n", "Config JSON should be indented/formatted")
 }
 
 // TestConcurrentAccess tests that multiple managers can work with the same config
@@ -201,29 +162,24 @@ func TestConcurrentAccess(t *testing.T) {
 
 	// Create first manager and save config
 	manager1, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := manager1.SetPreset("omarchy"); err != nil {
-		t.Fatalf("SetPreset failed: %v", err)
-	}
+	err = manager1.SetPreset("omarchy")
+	require.NoError(t, err)
 
-	if err := manager1.SaveConfig(); err != nil {
-		t.Fatalf("SaveConfig failed: %v", err)
-	}
+	err = manager1.SaveConfig()
+	require.NoError(t, err)
 
 	// Create second manager - should load the existing config
 	manager2, err := config.NewManager()
-	if err != nil {
-		t.Fatalf("Second NewManager failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Both managers should have the same config
 	cfg1 := manager1.GetConfig()
 	cfg2 := manager2.GetConfig()
 
-	if cfg1.Preset != cfg2.Preset {
-		t.Errorf("Managers have different presets: %s vs %s", cfg1.Preset, cfg2.Preset)
-	}
+	assert.Equal(t, cfg1.Preset, cfg2.Preset)
+	assert.Equal(t, cfg1.TargetThemeDir, cfg2.TargetThemeDir)
+	assert.Equal(t, cfg1.CurrentThemeLink, cfg2.CurrentThemeLink)
+	assert.Equal(t, cfg1.StagingDir, cfg2.StagingDir)
 }

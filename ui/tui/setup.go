@@ -97,10 +97,7 @@ func (m SetupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m SetupModel) View() string {
-	title := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("86")).
-		Render("Welcome to Palettesmith")
+	title := TitleStyle.Render("Welcome to Palettesmith")
 
 	if m.showConfirm {
 		// Show confirmation screen
@@ -113,28 +110,17 @@ func (m SetupModel) View() string {
 
 		confirmMsg := fmt.Sprintf("Configure Palettesmith with %s preset?", presetName)
 		
-		// Style for selected option
-		selectedStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Bold(true)
-		
-		// Style for unselected option
-		unselectedStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240"))
-		
 		var yesOption, noOption string
 		
 		if m.confirmChoice == "yes" {
-			yesOption = selectedStyle.Render("▸ [Y] Yes, continue to theming")
-			noOption = unselectedStyle.Render("  [N] No, change setup")
+			yesOption = SelectedStyle.Render("▸ [Y] Yes, continue to theming")
+			noOption = UnselectedStyle.Render("  [N] No, change setup")
 		} else {
-			yesOption = unselectedStyle.Render("  [Y] Yes, continue to theming")
-			noOption = selectedStyle.Render("▸ [N] No, change setup")
+			yesOption = UnselectedStyle.Render("  [Y] Yes, continue to theming")
+			noOption = SelectedStyle.Render("▸ [N] No, change setup")
 		}
 		
-		help := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
-			Render("Y/N to select, ↑/↓ to navigate, Enter to confirm, Esc to go back, Q to quit")
+		help := HelpStyle.Render("Y/N to select, ↑/↓ to navigate, Enter to confirm, Esc to go back, Q to quit")
 
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
@@ -152,17 +138,13 @@ func (m SetupModel) View() string {
 	}
 
 	// Show selection screen
-	genericStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	omarchyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	genericStyle := UnselectedStyle
+	omarchyStyle := UnselectedStyle
 
 	if m.selectedPreset == "generic" {
-		genericStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Bold(true)
+		genericStyle = SelectedStyle
 	} else {
-		omarchyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("86")).
-			Bold(true)
+		omarchyStyle = SelectedStyle
 	}
 
 	genericOption := genericStyle.Render("▸ [G] Generic - Use ~/.config/palettesmith/")
@@ -173,9 +155,7 @@ func (m SetupModel) View() string {
 		genericOption = genericStyle.Render("  [G] Generic - Use ~/.config/palettesmith/")
 	}
 
-	help := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241")).
-		Render("Press O/G to select, ↑/↓ to navigate, Enter to confirm, Q to quit")
+	help := HelpStyle.Render("Press O/G to select, ↑/↓ to navigate, Enter to confirm, Q to quit")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
