@@ -4,6 +4,7 @@ package tui
 import (
 	"fmt"
 	"palettesmith/internal/plugin"
+	"palettesmith/internal/theme"
 	"strings"
 	"time"
 
@@ -29,6 +30,8 @@ type Model struct {
 	form          formModel
 	specLoadedFor string
 	status        string
+
+	theme *theme.Store
 }
 
 func New() Model {
@@ -47,10 +50,20 @@ func New() Model {
 		items = []list.Item{targetItem{id: "", title: "No plugins found", description: "Put plugins under ./plugins/<id>/"}}
 	}
 
+	th := theme.NewStore(theme.ThemeConfig{
+		ThemeDefaults: map[string]string{
+			"bg":     "#1e1e2e",
+			"fg":     "#cdd6f4",
+			"accent": "#89b4fa",
+			"border": "#45475a",
+		},
+	})
+
 	return Model{
 		sidebar: NewSidebar(items),
 		page:    pageExplainer,
 		store:   st,
+		theme:   th,
 	}
 }
 
@@ -61,7 +74,7 @@ func (m Model) ensureFormFor(id string) Model {
 		return m
 	}
 	if plug, ok := m.store.Get(id); ok {
-		m.form = newFormFromSpec(plug.Spec)
+		m.form = newFormFromSpec(plug.Spec, id, m.theme)
 		m.specLoadedFor = id
 	}
 	return m
@@ -72,6 +85,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.sidebar.SetSize(sidebarW, m.height)
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -88,11 +102,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.status = "No target selected"
 				return m, clearAfter(2 * time.Second)
 			}
-			vals := m.form.Palette()
 
-			m.status = fmt.Sprintf("Applied (dry-run) %s: %v", sel, vals)
+			if plug, ok := m.store.Get(sel); ok {
+				eff := map[string]string{}
+				for _, f := range plug.Spec.Fields {
+					eff[f.Key] = m.theme.Resolve(sel, f.Key, f.Default)
+				}
+				m.status = fmt.Sprintf("Apply (dry-run) %s: %v", sel, eff)
+			} else {
+				m.status = "Unknown target"
+			}
 			return m, clearAfter(2 * time.Second)
-		default:
 		}
 	case statusClearMsg:
 		m.status = ""
@@ -167,8 +187,13 @@ func (m Model) View() string {
 			Foreground(lipgloss.Color("#8ece6a")).
 			Render(m.status) + "\n"
 	}
-	footer := helpStyle.Render("Tab Explainer/Form • ↑/↓ move • A Apply • Q Quit • / filter")
-
+	var footerText string
+	if m.page == pageForm {
+		footerText = "Enter to edit • ↑/↓ Move • A Apply • Q Quit"
+	} else {
+		footerText = "Tab Explainer/Form • ↑/↓ Move • Q Quit • / Filter"
+	}
+	footer := helpStyle.Render(footerText)
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right) + "\n" + statusLine + footer + "\n"
 }
 

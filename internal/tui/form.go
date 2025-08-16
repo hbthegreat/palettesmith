@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"palettesmith/internal/plugin"
+	"palettesmith/internal/theme"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,49 +22,57 @@ type formField struct {
 type formModel struct {
 	fields     []formField
 	focusIndex int
+	labelW     int
+
+	pluginID string
+	theme    *theme.Store
 }
 
-func newFormFromSpec(s plugin.Spec) formModel {
-	makeInput := func(f plugin.Field) textinput.Model {
+func newFormFromSpec(s plugin.Spec, pluginID string, th *theme.Store) formModel {
+	makeInput := func(f plugin.Field, val string) textinput.Model {
 		ti := textinput.New()
 		ti.Prompt = ""
 		switch f.Type {
 		case "color":
-			ti.CharLimit = 7
-			ti.Width = 8
-			if f.Default != "" {
-				ti.SetValue(f.Default)
-			} else {
-				ti.SetValue("#000000")
-			}
+			ti.CharLimit = 12
+			ti.Width = 12
 		case "number":
 			ti.CharLimit = 10
 			ti.Width = 8
-			if f.Default != "" {
-				ti.SetValue(f.Default)
-			} else {
-				ti.SetValue("0")
-			}
 		case "select":
 			// Render as text for now; later swap to a selector
 			ti.CharLimit = 64
 			ti.Width = 24
-			if f.Default != "" {
-				ti.SetValue(f.Default)
-			}
 		default: // "text"
 			ti.CharLimit = 256
 			ti.Width = 32
-			ti.SetValue(f.Default)
 		}
+		ti.SetValue(val)
 		return ti
 	}
 
 	out := make([]formField, 0, len(s.Fields))
+	lw := 0
+
 	for _, f := range s.Fields {
-		out = append(out, formField{spec: f, input: makeInput(f)})
+		// Resolve initial value: override > theme default > field default
+		val := f.Default
+		if th != nil {
+			val = th.Resolve(pluginID, f.Key, f.Default)
+		}
+		ff := formField{spec: f, input: makeInput(f, val)}
+		out = append(out, ff)
+		if n := len(f.Label); n > lw {
+			lw = n
+		}
 	}
-	fm := formModel{fields: out}
+
+	fm := formModel{
+		fields:   out,
+		labelW:   lw,
+		pluginID: pluginID,
+		theme:    th,
+	}
 	if len(fm.fields) > 0 {
 		fm.fields[0].input.Focus()
 	}
@@ -104,6 +113,9 @@ func (f formModel) Update(msg tea.Msg) (formModel, tea.Cmd) {
 		if i == f.focusIndex {
 			f.fields[i].input, cmd = f.fields[i].input.Update(msg)
 			f.fields[i].err = validateValue(f.fields[i].spec, f.fields[i].input.Value())
+			if f.theme != nil {
+				f.theme.SetOverride(f.pluginID, f.fields[i].spec.Key, f.fields[i].input.Value())
+			}
 		}
 	}
 	return f, cmd
@@ -137,6 +149,7 @@ func (f formModel) View() string {
 
 	rowNormal := lipgloss.NewStyle().Foreground(lipgloss.Color("#b0b0b0"))
 	rowFocus := lipgloss.NewStyle().Foreground(lipgloss.Color("#e6e6e6")).Bold(true)
+	tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#7d7d7d"))
 
 	for i, fld := range f.fields {
 		cursor := "  "
@@ -144,7 +157,8 @@ func (f formModel) View() string {
 			cursor = "▸ "
 		}
 
-		label := lipgloss.NewStyle().Bold(true).Render(fld.spec.Label)
+		padded := fmt.Sprintf("%-*s", f.labelW, fld.spec.Label)
+		label := lipgloss.NewStyle().Bold(true).Render(padded)
 
 		swatch := ""
 		if fld.spec.Type == "color" && colorRe.MatchString(fld.input.Value()) {
@@ -164,7 +178,18 @@ func (f formModel) View() string {
 			err = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("#ff6b6b")).Render(fld.err)
 		}
 
-		row := fmt.Sprintf("%s%s  %s%s%s%s", cursor, label, fld.input.View(), swatch, err, help)
+		source := "default"
+		if f.theme != nil {
+			if f.theme.HasOverride(f.pluginID, fld.spec.Key) {
+				source = "override"
+			} else if f.theme.HasDefault(fld.spec.Key) {
+				source = "theme"
+			}
+		}
+
+		tag := tagStyle.Render(" [" + source + "]")
+
+		row := fmt.Sprintf("%s%s  %s%s%s%s%s", cursor, label, fld.input.View(), swatch, err, help, tag)
 
 		if i == f.focusIndex {
 			fmt.Fprintln(&b, rowFocus.Render(row))
@@ -173,6 +198,5 @@ func (f formModel) View() string {
 		}
 	}
 
-	b.WriteString("\nEnter to edit • ↑/↓ move • A Apply • Q quit")
 	return b.String()
 }
