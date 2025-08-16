@@ -1,0 +1,6 @@
+{
+  "target_theme_dir": "/home/user/.config/omarchy/themes",
+  "current_theme_link": "/home/user/.config/omarchy/current/theme",
+  "preset": "omarchy",
+  "staging_dir": "/home/user/.config/palettesmith/staging"
+}

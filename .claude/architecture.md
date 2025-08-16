@@ -5,6 +5,7 @@
 ```
 cmd/palettesmith/           # Application entry point
 internal/                   # Business logic (unexported)
+  ├── config/              # Configuration management
   ├── plugin/              # Plugin discovery and loading
   ├── theme/               # Theme management and resolution
   └── validation/          # Input validation service (future)
@@ -17,7 +18,8 @@ plugins/                   # Plugin definitions
     ├── plugin.json        # Plugin manifest
     └── spec.json          # Field specifications
 tests/
-  └── fixtures/            # Sample configs for testing
+  ├── fixtures/            # Sample configs for testing
+  └── integration/         # Integration tests
 ```
 
 ## Data Flow

@@ -3,16 +3,23 @@
 ## Testing Strategy
 
 ### Unit Tests
-- Test all business logic in `internal/` packages
-- Focus on critical paths that cannot fail
-- Mock file system operations where possible
-- Test plugin loading, theme resolution, validation
+- **Location**: Colocated with source code (e.g., `internal/config/config_test.go`)
+- **Package**: Same package as source code (`package config`)
+- **Focus**: Test business logic, struct validation, error handling
+- **Speed**: Fast tests with minimal dependencies
+- **Scope**: Test unexported functions and internal implementation details
 
-### Integration Tests  
-- Test actual config file parsing/writing
-- Use `tests/fixtures/` for sample configs
-- Verify plugin reload commands work
-- Test theme application end-to-end
+### Integration Tests
+- **Location**: Separate directory (`tests/integration/`)
+- **Package**: Separate test package (e.g., `package config_test`)
+- **Focus**: Test actual file I/O, cross-package interactions, end-to-end workflows
+- **Dependencies**: Real filesystem, config files, plugin loading
+- **Scope**: Test public API only (black box testing)
+
+### Test Data and Fixtures
+- **Location**: `tests/fixtures/` for shared test data
+- **Structure**: Organized by component (`configs/`, `plugins/`, `themes/`)
+- **Usage**: Integration tests use fixtures, unit tests create minimal test data inline
 
 ### Test Coverage
 - Aim for high coverage on business logic

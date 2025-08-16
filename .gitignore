@@ -1,3 +1,4 @@
 dist/
 *.log
 .air.toml
+coverage.out
