@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"palettesmith/internal/color"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 )
@@ -25,77 +25,70 @@ func NewTemplateEngine(pluginDir, templateFile string) (*TemplateEngine, error) 
 	funcMap := template.FuncMap{
 		"trimPrefix": strings.TrimPrefix,
 		"trimSuffix": strings.TrimSuffix,
-		"alpha": func(color string, opacity float64) string {
-			// Apply alpha to color (return as rgba)
-			hex := strings.TrimPrefix(color, "#")
-			if len(hex) != 6 {
-				return color // fallback to original
+		"alpha": func(colorStr string, opacity float64) string {
+			// Clamp opacity to [0.0, 1.0]
+			if opacity < 0.0 {
+				opacity = 0.0
+			} else if opacity > 1.0 {
+				opacity = 1.0
 			}
 			
-			r, _ := strconv.ParseInt(hex[0:2], 16, 64)
-			g, _ := strconv.ParseInt(hex[2:4], 16, 64)
-			b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+			// Use color converter for robust parsing
+			converter, err := color.NewConverter(colorStr)
+			if err != nil {
+				return colorStr // fallback to original
+			}
 			
-			return fmt.Sprintf("rgba(%d,%d,%d,%.1f)", r, g, b, opacity)
+			return converter.ToRGBAString(opacity)
 		},
-		"brighten": func(color string, amount float64) string {
-			// Brighten color by amount (0.0-1.0)
-			hex := strings.TrimPrefix(color, "#")
-			if len(hex) != 6 {
-				return color // fallback to original
+		"brighten": func(colorStr string, amount float64) string {
+			// Clamp amount to [0.0, 1.0]
+			if amount < 0.0 {
+				amount = 0.0
+			} else if amount > 1.0 {
+				amount = 1.0
 			}
 			
-			r, _ := strconv.ParseInt(hex[0:2], 16, 64)
-			g, _ := strconv.ParseInt(hex[2:4], 16, 64)
-			b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+			// Use color converter for robust parsing
+			converter, err := color.NewConverter(colorStr)
+			if err != nil {
+				return colorStr // fallback to original
+			}
 			
-			// Brighten by interpolating toward white
-			r = int64(float64(r) + (255-float64(r))*amount)
-			g = int64(float64(g) + (255-float64(g))*amount)
-			b = int64(float64(b) + (255-float64(b))*amount)
-			
-			// Clamp to 0-255
-			if r > 255 { r = 255 }
-			if g > 255 { g = 255 }
-			if b > 255 { b = 255 }
-			
-			return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+			return converter.Brighten(amount)
 		},
 		"mix": func(color1, color2 string, ratio float64) string {
-			// Mix two colors by ratio (0.0 = color1, 1.0 = color2)
-			hex1 := strings.TrimPrefix(color1, "#")
-			hex2 := strings.TrimPrefix(color2, "#")
-			if len(hex1) != 6 || len(hex2) != 6 {
+			// Clamp ratio to [0.0, 1.0]
+			if ratio < 0.0 {
+				ratio = 0.0
+			} else if ratio > 1.0 {
+				ratio = 1.0
+			}
+			
+			// Use color converter for robust parsing
+			conv1, err1 := color.NewConverter(color1)
+			conv2, err2 := color.NewConverter(color2)
+			if err1 != nil || err2 != nil {
 				return color1 // fallback to first color
 			}
 			
-			r1, _ := strconv.ParseInt(hex1[0:2], 16, 64)
-			g1, _ := strconv.ParseInt(hex1[2:4], 16, 64)
-			b1, _ := strconv.ParseInt(hex1[4:6], 16, 64)
-			
-			r2, _ := strconv.ParseInt(hex2[0:2], 16, 64)
-			g2, _ := strconv.ParseInt(hex2[2:4], 16, 64)
-			b2, _ := strconv.ParseInt(hex2[4:6], 16, 64)
-			
-			// Linear interpolation
-			r := int64(float64(r1)*(1-ratio) + float64(r2)*ratio)
-			g := int64(float64(g1)*(1-ratio) + float64(g2)*ratio)
-			b := int64(float64(b1)*(1-ratio) + float64(b2)*ratio)
-			
-			return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+			return conv1.Mix(conv2, ratio)
 		},
-		"hexToRGBA": func(hex string, alpha float64) string {
-			// Convert #ffffff to rgba(255,255,255,1.0)
-			hex = strings.TrimPrefix(hex, "#")
-			if len(hex) != 6 {
+		"hexToRGBA": func(hexStr string, alpha float64) string {
+			// Clamp alpha to [0.0, 1.0]
+			if alpha < 0.0 {
+				alpha = 0.0
+			} else if alpha > 1.0 {
+				alpha = 1.0
+			}
+			
+			// Use color converter for robust parsing
+			converter, err := color.NewConverter(hexStr)
+			if err != nil {
 				return "rgba(0,0,0,1.0)" // fallback
 			}
 			
-			r, _ := strconv.ParseInt(hex[0:2], 16, 64)
-			g, _ := strconv.ParseInt(hex[2:4], 16, 64)
-			b, _ := strconv.ParseInt(hex[4:6], 16, 64)
-			
-			return fmt.Sprintf("rgba(%d,%d,%d,%.1f)", r, g, b, alpha)
+			return converter.ToRGBAString(alpha)
 		},
 	}
 	

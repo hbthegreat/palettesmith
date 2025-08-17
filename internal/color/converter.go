@@ -3,6 +3,7 @@ package color
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -159,4 +160,64 @@ func parseHexDigits(hexPart string) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid hex color: invalid length %d (expected 3 or 6)", len(hexPart))
 	}
+}
+
+// ToRGBAString returns the color as rgba(r,g,b,a) format
+func (c *Converter) ToRGBAString(alpha float64) string {
+	if c == nil {
+		return ""
+	}
+	
+	r, g, b := c.getRGBValues()
+	return fmt.Sprintf("rgba(%d,%d,%d,%.1f)", r, g, b, alpha)
+}
+
+// Brighten returns a brightened version of the color by interpolating toward white
+func (c *Converter) Brighten(amount float64) string {
+	if c == nil {
+		return ""
+	}
+	
+	r, g, b := c.getRGBValues()
+	
+	// Brighten by interpolating toward white (255,255,255)
+	r = int64(float64(r) + (255-float64(r))*amount)
+	g = int64(float64(g) + (255-float64(g))*amount)
+	b = int64(float64(b) + (255-float64(b))*amount)
+	
+	// Clamp to 0-255
+	if r > 255 { r = 255 }
+	if g > 255 { g = 255 }
+	if b > 255 { b = 255 }
+	
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+}
+
+// Mix blends this color with another color by the specified ratio
+// ratio 0.0 = this color, ratio 1.0 = other color
+func (c *Converter) Mix(other *Converter, ratio float64) string {
+	if c == nil || other == nil {
+		return ""
+	}
+	
+	r1, g1, b1 := c.getRGBValues()
+	r2, g2, b2 := other.getRGBValues()
+	
+	// Linear interpolation
+	r := int64(float64(r1)*(1-ratio) + float64(r2)*ratio)
+	g := int64(float64(g1)*(1-ratio) + float64(g2)*ratio)
+	b := int64(float64(b1)*(1-ratio) + float64(b2)*ratio)
+	
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+}
+
+// getRGBValues extracts RGB values from the internal hex6 format
+func (c *Converter) getRGBValues() (int64, int64, int64) {
+	hex := strings.TrimPrefix(c.value, "#")
+	
+	r, _ := strconv.ParseInt(hex[0:2], 16, 64)
+	g, _ := strconv.ParseInt(hex[2:4], 16, 64)
+	b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+	
+	return r, g, b
 }

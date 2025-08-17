@@ -108,6 +108,22 @@ func TestFormValidation(t *testing.T) {
 
 func TestIsValidColor(t *testing.T) {
 	t.Run("should_validate_color_formats", func(t *testing.T) {
+		// Create a form with a color field for testing
+		spec := plugin.Spec{
+			ID:    "test",
+			Title: "Test Plugin",
+			Fields: []plugin.Field{
+				{
+					Key:     "color",
+					Label:   "Color",
+					Type:    "color",
+					Default: "#ff0080",
+				},
+			},
+		}
+		
+		form := newFormFromSpec(spec, "test", nil)
+		
 		validColors := []string{
 			"#ff0080",
 			"#FFFFFF",
@@ -119,7 +135,7 @@ func TestIsValidColor(t *testing.T) {
 		}
 
 		for _, color := range validColors {
-			assert.True(t, isValidColor(color), "Color %s should be valid", color)
+			assert.True(t, form.isValidColor(color), "Color %s should be valid", color)
 		}
 
 		invalidColors := []string{
@@ -130,7 +146,7 @@ func TestIsValidColor(t *testing.T) {
 		}
 
 		for _, color := range invalidColors {
-			assert.False(t, isValidColor(color), "Color %s should be invalid", color)
+			assert.False(t, form.isValidColor(color), "Color %s should be invalid", color)
 		}
 	})
 }

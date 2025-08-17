@@ -131,11 +131,10 @@ func (f formModel) Update(msg tea.Msg) (formModel, tea.Cmd) {
 }
 
 // isValidColor checks if a color value is valid for color swatch display
-func isValidColor(value string) bool {
-	// Use validation service to check if it's a valid color
-	validator := validation.NewPluginValidator()
+func (f formModel) isValidColor(value string) bool {
+	// Use the existing validator instance to check if it's a valid color
 	field := plugin.Field{Type: "color"}
-	errors := validator.ValidateField(field, value)
+	errors := f.validator.ValidateField(field, value)
 	return len(errors) == 0
 }
 
@@ -152,7 +151,7 @@ func (f formModel) View() string {
 		label := lipgloss.NewStyle().Bold(true).Render(padded)
 
 		swatch := ""
-		if fld.spec.Type == "color" && isValidColor(fld.input.Value()) {
+		if fld.spec.Type == "color" && f.isValidColor(fld.input.Value()) {
 			swatch = " " + lipgloss.NewStyle().
 				Background(lipgloss.Color(fld.input.Value())).
 				Padding(0, 1).

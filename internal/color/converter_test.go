@@ -390,3 +390,39 @@ func TestConverter_ErrorMessages(t *testing.T) {
 		assert.Contains(t, err.Error(), "length")
 	})
 }
+
+func TestConverter_NewMethods(t *testing.T) {
+	t.Run("should_convert_to_rgba_string", func(t *testing.T) {
+		converter, err := NewConverter("#ff0080")
+		require.NoError(t, err)
+		
+		result := converter.ToRGBAString(0.8)
+		assert.Equal(t, "rgba(255,0,128,0.8)", result)
+	})
+	
+	t.Run("should_brighten_color", func(t *testing.T) {
+		converter, err := NewConverter("#808080")
+		require.NoError(t, err)
+		
+		result := converter.Brighten(0.3)
+		assert.Equal(t, "#a6a6a6", result)
+	})
+	
+	t.Run("should_mix_colors", func(t *testing.T) {
+		conv1, err1 := NewConverter("#000000")
+		conv2, err2 := NewConverter("#ffffff")
+		require.NoError(t, err1)
+		require.NoError(t, err2)
+		
+		result := conv1.Mix(conv2, 0.5)
+		assert.Equal(t, "#7f7f7f", result)
+	})
+	
+	t.Run("should_handle_nil_safely", func(t *testing.T) {
+		var nilConverter *Converter
+		
+		assert.Equal(t, "", nilConverter.ToRGBAString(0.5))
+		assert.Equal(t, "", nilConverter.Brighten(0.3))
+		assert.Equal(t, "", nilConverter.Mix(nil, 0.5))
+	})
+}

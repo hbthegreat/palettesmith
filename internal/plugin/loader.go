@@ -192,19 +192,26 @@ func mustGetwd() string {
 	return wd
 }
 
+// isProjectRoot checks if the given directory contains project root indicators
+func isProjectRoot(dir string) bool {
+	// Check for plugins directory
+	if _, err := os.Stat(filepath.Join(dir, "plugins")); err == nil {
+		return true
+	}
+	// Check for go.mod file
+	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+		return true
+	}
+	return false
+}
+
 func findProjectRoot() string {
 	wd := mustGetwd()
 	
 	// Look for project root by finding go.mod or plugins directory
 	current := wd
 	for {
-		// Check if we're in the project root (has plugins directory)
-		if _, err := os.Stat(filepath.Join(current, "plugins")); err == nil {
-			return current
-		}
-		
-		// Check if we're in the project root (has go.mod)
-		if _, err := os.Stat(filepath.Join(current, "go.mod")); err == nil {
+		if isProjectRoot(current) {
 			return current
 		}
 		
