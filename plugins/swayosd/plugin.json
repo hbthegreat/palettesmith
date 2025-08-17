@@ -1,0 +1,14 @@
+{
+  "id": "swayosd",
+  "title": "SwayOSD",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/swayosd/style.css"
+  ],
+  "system_paths": [
+    "/etc/xdg/swayosd/style.css"
+  ],
+  "reload": [
+    "pkill", "-SIGUSR1", "swayosd-server"
+  ]
+}

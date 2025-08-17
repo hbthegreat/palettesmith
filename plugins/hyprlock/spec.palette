@@ -1,0 +1,28 @@
+{
+  "id": "hyprlock",
+  "title": "Hyprlock Screen Locker",
+  "template_file": "hyprlock.conf.tmpl",
+  "fields": [
+    {
+      "key": "bg_color",
+      "label": "Background Color",
+      "type": "color",
+      "default": "#181824",
+      "help": "Main background color"
+    },
+    {
+      "key": "fg_color",
+      "label": "Foreground Color", 
+      "type": "color",
+      "default": "#cdd6f4",
+      "help": "Text and border color"
+    },
+    {
+      "key": "accent_color",
+      "label": "Accent Color",
+      "type": "color",
+      "default": "#449dab",
+      "help": "Check/success color"
+    }
+  ]
+}

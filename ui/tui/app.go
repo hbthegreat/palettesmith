@@ -35,7 +35,8 @@ type Model struct {
 }
 
 func New() Model {
-	st, _ := plugin.Discover()
+	result := plugin.Discover()
+	st := result.Store
 
 	items := []list.Item{}
 	for _, p := range st.List() {

@@ -4,15 +4,17 @@ package plugin
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
 type Spec struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Fields []Field `json:"fields"`
+	ID           string  `json:"id"`
+	Title        string  `json:"title"`
+	TemplateFile string  `json:"template_file"`
+	Fields       []Field `json:"fields"`
 }
 
 type Field struct {
@@ -43,88 +45,177 @@ type Plugin struct {
 }
 
 type Store struct {
-	byID map[string]Plugin
-	list []Plugin
+	byID   map[string]Plugin
+	list   []Plugin
+	errors map[string][]error
 }
 
-func Discover() (*Store, error) {
-	root := filepath.Join(mustGetwd(), "plugins")
+type LoadResult struct {
+	Store  *Store
+	Errors map[string][]error
+}
+
+func Discover() *LoadResult {
+	root := filepath.Join(findProjectRoot(), "plugins")
 	entries, err := os.ReadDir(root)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return &Store{byID: map[string]Plugin{}, list: nil}, nil
+			return &LoadResult{
+				Store:  &Store{byID: map[string]Plugin{}, list: nil, errors: map[string][]error{}},
+				Errors: map[string][]error{},
+			}
 		}
-		return nil, err
+		return &LoadResult{
+			Store: &Store{byID: map[string]Plugin{}, list: nil, errors: map[string][]error{}},
+			Errors: map[string][]error{
+				"system": {fmt.Errorf("failed to read plugins directory: %w", err)},
+			},
+		}
 	}
 
 	seen := map[string]bool{}
 	var plugs []Plugin
+	allErrors := map[string][]error{}
+	pluginErrors := map[string][]error{}
 
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue
 		}
-		dir := filepath.Join(root, e.Name())
+		
+		pluginID := e.Name()
+		dir := filepath.Join(root, pluginID)
 		mf := filepath.Join(dir, "plugin.json")
+		
 		if _, err := os.Stat(mf); err != nil {
+			allErrors[pluginID] = append(allErrors[pluginID], 
+				fmt.Errorf("plugin.json not found: %w", err))
 			continue
 		}
-		p, err := loadOne(mf)
-		if err != nil {
-			// ignore bad plugins
-			continue
+		
+		p, loadErrs := loadOne(mf)
+		if len(loadErrs) > 0 {
+			allErrors[pluginID] = append(allErrors[pluginID], loadErrs...)
+			pluginErrors[pluginID] = loadErrs
 		}
-		if seen[p.Manifest.ID] {
-			continue
+		
+		if p.Manifest.ID != "" {
+			if seen[p.Manifest.ID] {
+				allErrors[pluginID] = append(allErrors[pluginID], 
+					fmt.Errorf("duplicate plugin ID: %s", p.Manifest.ID))
+				continue
+			}
+			seen[p.Manifest.ID] = true
+			plugs = append(plugs, p)
 		}
-		seen[p.Manifest.ID] = true
-		plugs = append(plugs, p)
 	}
 
 	by := make(map[string]Plugin, len(plugs))
 	for _, p := range plugs {
 		by[p.Manifest.ID] = p
 	}
-	return &Store{byID: by, list: plugs}, nil
+	
+	return &LoadResult{
+		Store: &Store{
+			byID:   by, 
+			list:   plugs, 
+			errors: pluginErrors,
+		},
+		Errors: allErrors,
+	}
 }
 
-func loadOne(manifestPath string) (Plugin, error) {
+func loadOne(manifestPath string) (Plugin, []error) {
+	var errs []error
+	
 	b, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return Plugin{}, err
+		return Plugin{}, []error{fmt.Errorf("failed to read manifest: %w", err)}
 	}
+	
 	var m Manifest
 	if err := json.Unmarshal(b, &m); err != nil {
-		return Plugin{}, err
+		return Plugin{}, []error{fmt.Errorf("invalid manifest JSON: %w", err)}
 	}
+	
 	m.Dir = filepath.Dir(manifestPath)
-	if m.ID == "" || m.SpecRelPath == "" {
-		return Plugin{}, errors.New("invalid plugin manifest (missing id/spec)")
+	
+	if m.ID == "" {
+		errs = append(errs, errors.New("manifest missing required field: id"))
 	}
+	if m.SpecRelPath == "" {
+		errs = append(errs, errors.New("manifest missing required field: spec"))
+	}
+	
+	if len(errs) > 0 {
+		return Plugin{Manifest: m}, errs
+	}
+	
 	specPath := filepath.Join(m.Dir, filepath.FromSlash(m.SpecRelPath))
 	sb, err := os.ReadFile(specPath)
 	if err != nil {
-		return Plugin{}, err
+		errs = append(errs, fmt.Errorf("failed to read spec file: %w", err))
+		return Plugin{Manifest: m}, errs
 	}
+	
 	var s Spec
 	if err := json.Unmarshal(sb, &s); err != nil {
-		return Plugin{}, err
+		errs = append(errs, fmt.Errorf("invalid spec JSON: %w", err))
+		return Plugin{Manifest: m}, errs
 	}
 
 	m.ID = strings.ToLower(m.ID)
 	if s.ID == "" {
 		s.ID = m.ID
 	}
-	return Plugin{m, s}, nil
+	
+	plugin := Plugin{Manifest: m, Spec: s}
+	
+	// TODO: Add plugin validation here when we integrate with validation package
+	// validator := validation.NewPluginValidator()
+	// validationErrs := validator.ValidatePlugin(plugin)
+	// errs = append(errs, validationErrs...)
+	
+	return plugin, errs
 }
 
 func (st *Store) List() []Plugin               { return st.list }
 func (st *Store) Get(id string) (Plugin, bool) { p, ok := st.byID[strings.ToLower(id)]; return p, ok }
+func (st *Store) Errors() map[string][]error   { return st.errors }
+func (st *Store) HasErrors(id string) bool     { _, ok := st.errors[id]; return ok }
 
 func mustGetwd() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		return "."
 	}
+	return wd
+}
+
+func findProjectRoot() string {
+	wd := mustGetwd()
+	
+	// Look for project root by finding go.mod or plugins directory
+	current := wd
+	for {
+		// Check if we're in the project root (has plugins directory)
+		if _, err := os.Stat(filepath.Join(current, "plugins")); err == nil {
+			return current
+		}
+		
+		// Check if we're in the project root (has go.mod)
+		if _, err := os.Stat(filepath.Join(current, "go.mod")); err == nil {
+			return current
+		}
+		
+		parent := filepath.Dir(current)
+		if parent == current {
+			// Reached filesystem root
+			break
+		}
+		current = parent
+	}
+	
+	// Fallback to current directory
 	return wd
 }

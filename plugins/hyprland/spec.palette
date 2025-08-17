@@ -1,0 +1,14 @@
+{
+  "id": "hyprland",
+  "title": "Hyprland",
+  "template_file": "hyprland.conf.tmpl",
+  "fields": [
+    {
+      "key": "active_border",
+      "label": "Active Border",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "Active window border color"
+    }
+  ]
+}

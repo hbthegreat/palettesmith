@@ -1,0 +1,14 @@
+{
+  "id": "waybar",
+  "title": "Waybar",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/waybar/style.css"
+  ],
+  "system_paths": [
+    "/etc/xdg/waybar/style.css"
+  ],
+  "reload": [
+    "pkill", "-SIGUSR2", "waybar"
+  ]
+}

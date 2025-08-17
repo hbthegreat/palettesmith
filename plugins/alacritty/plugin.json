@@ -1,0 +1,15 @@
+{
+  "id": "alacritty",
+  "title": "Alacritty Terminal",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/alacritty/alacritty.toml",
+    "~/.alacritty.toml"
+  ],
+  "system_paths": [
+    "/etc/alacritty/alacritty.toml"
+  ],
+  "reload": [
+    "pkill", "-USR1", "alacritty"
+  ]
+}

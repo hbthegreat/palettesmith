@@ -1,0 +1,21 @@
+{
+  "id": "waybar",
+  "title": "Waybar",
+  "template_file": "style.css.tmpl",
+  "fields": [
+    {
+      "key": "foreground",
+      "label": "Foreground",
+      "type": "color",
+      "default": "#cdd6f4",
+      "help": "Primary text color"
+    },
+    {
+      "key": "background",
+      "label": "Background", 
+      "type": "color",
+      "default": "#181824",
+      "help": "Primary background color"
+    }
+  ]
+}

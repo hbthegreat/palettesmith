@@ -1,0 +1,14 @@
+{
+  "id": "hyprlock",
+  "title": "Hyprlock Screen Locker",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/hypr/hyprlock.conf"
+  ],
+  "system_paths": [
+    "/etc/xdg/hypr/hyprlock.conf"
+  ],
+  "reload": [
+    "pkill", "-SIGUSR1", "hyprlock"
+  ]
+}

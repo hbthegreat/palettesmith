@@ -1,0 +1,28 @@
+{
+  "id": "swayosd",
+  "title": "SwayOSD",
+  "template_file": "style.css.tmpl",
+  "fields": [
+    {
+      "key": "background_color",
+      "label": "Background",
+      "type": "color",
+      "default": "#24273a",
+      "help": "OSD background color"
+    },
+    {
+      "key": "border_color",
+      "label": "Border",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "OSD border color"
+    },
+    {
+      "key": "text_color",
+      "label": "Text",
+      "type": "color",
+      "default": "#cad3f5",
+      "help": "OSD text color"
+    }
+  ]
+}
