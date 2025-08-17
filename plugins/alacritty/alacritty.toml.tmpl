@@ -1,0 +1,75 @@
+[colors.primary]
+background = "{{.background}}"
+foreground = "{{.foreground}}"
+dim_foreground = "{{alpha .foreground 0.5}}"
+bright_foreground = "{{.foreground}}"
+
+[colors.cursor]
+text = "{{.background}}"
+cursor = "{{.cursor}}"
+
+[colors.vi_mode_cursor]
+text = "{{.background}}"
+cursor = "{{.blue}}"
+
+[colors.search.matches]
+foreground = "{{.background}}"
+background = "{{alpha .foreground 0.7}}"
+
+[colors.search.focused_match]
+foreground = "{{.background}}"
+background = "{{.green}}"
+
+[colors.footer_bar]
+foreground = "{{.background}}"
+background = "{{alpha .foreground 0.7}}"
+
+[colors.hints.start]
+foreground = "{{.background}}"
+background = "{{.yellow}}"
+
+[colors.hints.end]
+foreground = "{{.background}}"
+background = "{{alpha .foreground 0.7}}"
+
+[colors.selection]
+text = "{{.background}}"
+background = "{{.selection_bg}}"
+
+[colors.normal]
+black = "{{.black}}"
+red = "{{.red}}"
+green = "{{.green}}"
+yellow = "{{.yellow}}"
+blue = "{{.blue}}"
+magenta = "{{.magenta}}"
+cyan = "{{.cyan}}"
+white = "{{.white}}"
+
+[colors.bright]
+black = "{{brighten .black 0.2}}"
+red = "{{.red}}"
+green = "{{.green}}"
+yellow = "{{.yellow}}"
+blue = "{{.blue}}"
+magenta = "{{.magenta}}"
+cyan = "{{.cyan}}"
+white = "{{brighten .white 0.1}}"
+
+[colors.dim]
+black = "{{.black}}"
+red = "{{.red}}"
+green = "{{.green}}"
+yellow = "{{.yellow}}"
+blue = "{{.blue}}"
+magenta = "{{.magenta}}"
+cyan = "{{.cyan}}"
+white = "{{.white}}"
+
+[[colors.indexed_colors]]
+index = 16
+color = "{{mix .red .yellow 0.5}}"
+
+[[colors.indexed_colors]]
+index = 17
+color = "{{.cursor}}"

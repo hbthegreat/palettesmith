@@ -35,7 +35,8 @@ type Model struct {
 }
 
 func New() Model {
-	st, _ := plugin.Discover()
+	result := plugin.Discover()
+	st := result.Store
 
 	items := []list.Item{}
 	for _, p := range st.List() {
@@ -127,25 +128,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-var (
-	leftPane = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderRight(true).
-			BorderForeground(lipgloss.Color("#666666"))
-	rightStyle = lipgloss.NewStyle().
-			Padding(0, 2)
-	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7d7d7d"))
-	titleStyle = lipgloss.NewStyle().
-			Bold(true)
-	tabActive = lipgloss.NewStyle().
-			Bold(true)
-	tabDim = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#7d7d7d"))
-)
 
 func (m Model) View() string {
-	left := leftPane.Width(sidebarW).Render(m.sidebar.View())
+	left := LeftPaneStyle.Width(sidebarW).Render(m.sidebar.View())
 	rightWidth := max(40, m.width-sidebarW)
 
 	title := m.sidebar.SelectedTitle()
@@ -154,9 +139,9 @@ func (m Model) View() string {
 	}
 
 	tabs := lipgloss.JoinHorizontal(lipgloss.Top,
-		boolStyle(m.page == pageExplainer, tabActive, tabDim).Render("Explainer"),
+		boolStyle(m.page == pageExplainer, TabActiveStyle, TabDimStyle).Render("Explainer"),
 		lipgloss.NewStyle().Padding(0, 1).Render("·"),
-		boolStyle(m.page == pageForm, tabActive, tabDim).Render("Form"),
+		boolStyle(m.page == pageForm, TabActiveStyle, TabDimStyle).Render("Form"),
 	)
 
 	selID := m.sidebar.SelectedID()
@@ -172,20 +157,18 @@ func (m Model) View() string {
 	switch m.page {
 	case pageExplainer:
 		body = fmt.Sprintf("%s\n\nThis target is provided by a plugin.\n• User paths: %s\n• System paths: %s\n• Reload: %s\n",
-			titleStyle.Render(title), nz(upaths, "—"), nz(spaths, "—"), nz(reload, "—"))
+			TitleStyle.Render(title), nz(upaths, "—"), nz(spaths, "—"), nz(reload, "—"))
 	case pageForm:
-		body = titleStyle.Render(title) + "\n\n" + m.form.View()
+		body = TitleStyle.Render(title) + "\n\n" + m.form.View()
 	}
 
 	body = tabs + "\n\n" + body
 
-	right := rightStyle.Width(rightWidth).Render(body)
+	right := RightPaneStyle.Width(rightWidth).Render(body)
 
 	statusLine := ""
 	if m.status != "" {
-		statusLine = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#8ece6a")).
-			Render(m.status) + "\n"
+		statusLine = StatusStyle.Render(m.status) + "\n"
 	}
 	var footerText string
 	if m.page == pageForm {
@@ -193,7 +176,7 @@ func (m Model) View() string {
 	} else {
 		footerText = "Tab Explainer/Form • ↑/↓ Move • Q Quit • / Filter"
 	}
-	footer := helpStyle.Render(footerText)
+	footer := HelpStyle.Render(footerText)
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right) + "\n" + statusLine + footer + "\n"
 }
 

@@ -1,0 +1,28 @@
+{
+  "id": "mako",
+  "title": "Mako Notifications",
+  "template_file": "config.tmpl",
+  "fields": [
+    {
+      "key": "text_color",
+      "label": "Text Color",
+      "type": "color",
+      "default": "#cad3f5",
+      "help": "Notification text color"
+    },
+    {
+      "key": "border_color",
+      "label": "Border Color",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "Notification border color"
+    },
+    {
+      "key": "background_color",
+      "label": "Background Color",
+      "type": "color",
+      "default": "#24273a",
+      "help": "Notification background color"
+    }
+  ]
+}

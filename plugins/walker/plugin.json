@@ -1,0 +1,14 @@
+{
+  "id": "walker",
+  "title": "Walker",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/walker/style.css"
+  ],
+  "system_paths": [
+    "/etc/xdg/walker/style.css"
+  ],
+  "reload": [
+    "pkill", "-SIGUSR2", "walker"
+  ]
+}

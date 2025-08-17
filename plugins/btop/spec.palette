@@ -1,0 +1,49 @@
+{
+  "id": "btop",
+  "title": "BTTop System Monitor",
+  "template_file": "btop.theme.tmpl",
+  "fields": [
+    {
+      "key": "main_bg",
+      "label": "Main Background",
+      "type": "color",
+      "default": "#24273a",
+      "help": "Main background color"
+    },
+    {
+      "key": "main_fg",
+      "label": "Main Foreground",
+      "type": "color", 
+      "default": "#c6d0f5",
+      "help": "Main text color"
+    },
+    {
+      "key": "title",
+      "label": "Title Color",
+      "type": "color",
+      "default": "#c6d0f5", 
+      "help": "Title color for boxes"
+    },
+    {
+      "key": "hi_fg",
+      "label": "Highlight",
+      "type": "color",
+      "default": "#8caaee",
+      "help": "Highlight color for keyboard shortcuts"
+    },
+    {
+      "key": "selected_bg",
+      "label": "Selection Background",
+      "type": "color",
+      "default": "#51576d",
+      "help": "Background color of selected items"
+    },
+    {
+      "key": "selected_fg", 
+      "label": "Selection Foreground",
+      "type": "color",
+      "default": "#8caaee",
+      "help": "Foreground color of selected items"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "id": "hyprland",
   "title": "Hyprland",
-  "spec": "spec.json",
+  "spec": "spec.palette",
   "user_paths": [
     "~/.config/hypr/hyprland.conf"
   ],

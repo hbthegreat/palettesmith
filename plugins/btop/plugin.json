@@ -1,0 +1,14 @@
+{
+  "id": "btop",
+  "title": "BTTop System Monitor",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/btop/themes/theme.theme"
+  ],
+  "system_paths": [
+    "/usr/share/btop/themes/theme.theme"
+  ],
+  "reload": [
+    "pkill", "-SIGUSR1", "btop"
+  ]
+}

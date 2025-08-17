@@ -1,0 +1,14 @@
+{
+  "id": "mako",
+  "title": "Mako Notifications",
+  "spec": "spec.palette",
+  "user_paths": [
+    "~/.config/mako/config"
+  ],
+  "system_paths": [
+    "/etc/xdg/mako/config"
+  ],
+  "reload": [
+    "makoctl", "reload"
+  ]
+}

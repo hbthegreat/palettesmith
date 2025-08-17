@@ -1,0 +1,49 @@
+{
+  "id": "walker",
+  "title": "Walker",
+  "template_file": "style.css.tmpl",
+  "fields": [
+    {
+      "key": "selected_text",
+      "label": "Selected Text",
+      "type": "color",
+      "default": "#8caaee",
+      "help": "Color for selected text in walker"
+    },
+    {
+      "key": "text",
+      "label": "Text",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "Primary text color"
+    },
+    {
+      "key": "base",
+      "label": "Base",
+      "type": "color",
+      "default": "#24273a",
+      "help": "Base background color"
+    },
+    {
+      "key": "border",
+      "label": "Border",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "Border color"
+    },
+    {
+      "key": "foreground",
+      "label": "Foreground",
+      "type": "color",
+      "default": "#c6d0f5",
+      "help": "Foreground text color"
+    },
+    {
+      "key": "background",
+      "label": "Background",
+      "type": "color",
+      "default": "#24273a",
+      "help": "Window background color"
+    }
+  ]
+}
